@@ -15,13 +15,16 @@ import org.junit.runner.RunWith;
 
 import javax.enterprise.inject.spi.Extension;
 import javax.inject.Inject;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Arquillian.class)
 public class ConverterTest {
@@ -70,6 +73,22 @@ public class ConverterTest {
         }
     }
 
+    @Test
+    public void map() {
+        final Collection<In> input = Arrays.asList(new In("a"), new In("aa"), new In("aaa"));
+
+        final Map<String, Out> output = len.to(input, "value");
+        assertNotNull(output);
+        assertEquals(3, output.size());
+
+        final Set<String> keys = output.keySet();
+        final Collection<Out> values = output.values();
+        for (In in : input) {
+            assertTrue(keys.contains(in.value));
+            assertTrue(values.contains(new Out(in.value.length())));
+        }
+    }
+
     public static class StringHolder {
         public String value;
 
@@ -91,6 +110,23 @@ public class ConverterTest {
 
         public Out(final int length) {
             len = length;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Out out = (Out) o;
+
+            if (len != out.len) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return len;
         }
     }
 
