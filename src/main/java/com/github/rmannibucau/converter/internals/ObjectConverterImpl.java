@@ -21,6 +21,10 @@ public class ObjectConverterImpl<FROM, TO> implements ObjectConverter<FROM, TO> 
 
     @Override
     public TO to(final FROM from) {
+        if (from == null) {
+            return null;
+        }
+
         try {
             return (TO) convertMethod.invoke(null, from);
         } catch (IllegalAccessException e) {
