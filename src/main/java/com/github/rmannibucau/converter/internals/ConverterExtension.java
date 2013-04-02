@@ -28,10 +28,10 @@ public class ConverterExtension implements Extension {
     private final Collection<Bean<Object>> beans = new ArrayList<Bean<Object>>();
 
     protected <X> void processBean(final @Observes ProcessManagedBean<X> pb, final BeanManager bm) {
-        for (AnnotatedMethod<?> method : pb.getAnnotatedBeanClass().getMethods()) {
+        for (final AnnotatedMethod<?> method : pb.getAnnotatedBeanClass().getMethods()) {
             final Converter converter = method.getAnnotation(Converter.class);
             if (converter != null) {
-                if (method.getParameters().size() == 1 && Modifier.isStatic(method.getJavaMember().getModifiers())) {
+                if (method.getParameters().size() == 1) {
                     final Class<?> in = method.getJavaMember().getParameterTypes()[0];
                     final Class<?> out = method.getJavaMember().getReturnType();
 
@@ -45,7 +45,7 @@ public class ConverterExtension implements Extension {
                             .alternative(true)
                             .types(new ParameterizedTypeImpl(ObjectConverter.class, new Type[] { in, out }, ObjectConverter.class), Object.class)
                             .qualifiers(AnnotationInstanceProvider.of(Converter.class, params), AnnotationInstanceProvider.of(Any.class))
-                            .beanLifecycle(new ConverterLifecycle(method.getJavaMember()))
+                            .beanLifecycle(new ConverterLifecycle(Bean.class.cast(pb.getBean()), method.getJavaMember()))
                             .passivationCapable(false)
                             .create());
                 } else {
@@ -57,7 +57,7 @@ public class ConverterExtension implements Extension {
     }
 
     protected void addConverters(final @Observes AfterBeanDiscovery abd) {
-        for (Bean<Object> bean : beans) {
+        for (final Bean<Object> bean : beans) {
             abd.addBean(bean);
         }
         beans.clear();

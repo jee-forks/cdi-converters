@@ -1,7 +1,10 @@
 package com.github.rmannibucau.converter.internals;
 
 import com.github.rmannibucau.converter.api.ObjectConverter;
+import org.apache.deltaspike.core.api.provider.BeanProvider;
 
+import javax.enterprise.inject.spi.Bean;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,10 +15,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ObjectConverterImpl<FROM, TO> implements ObjectConverter<FROM, TO> {
+    private final Bean<Object> bean;
     private final Method convertMethod;
     private final Map<String, Field> fieldCache = new ConcurrentHashMap<String, Field>();
 
-    public ObjectConverterImpl(Method convertMethod) {
+    public ObjectConverterImpl(final Bean<Object> bean, final Method convertMethod) {
+        this.bean = bean;
         this.convertMethod = convertMethod;
     }
 
@@ -26,12 +31,19 @@ public class ObjectConverterImpl<FROM, TO> implements ObjectConverter<FROM, TO> 
         }
 
         try {
-            return (TO) convertMethod.invoke(null, from);
+            return (TO) convertMethod.invoke(instance(), from);
         } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(e);
         } catch (InvocationTargetException e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private Object instance() {
+        if (bean == null) { // static method
+            return null;
+        }
+        return BeanProvider.getContextualReference(bean.getBeanClass(), bean.getQualifiers().toArray(new Annotation[bean.getQualifiers().size()]));
     }
 
     @Override

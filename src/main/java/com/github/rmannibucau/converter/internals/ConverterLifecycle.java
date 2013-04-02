@@ -5,17 +5,25 @@ import org.apache.deltaspike.core.util.metadata.builder.ContextualLifecycle;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class ConverterLifecycle implements ContextualLifecycle<Object> {
+    private final Bean<Object> bean;
     private final Method delegate;
 
-    public ConverterLifecycle(final Method javaMember) {
-        delegate = javaMember;
+    public ConverterLifecycle(final Bean<Object> bean, final Method javaMember) {
+        this.delegate = javaMember;
+
+        if (Modifier.isStatic(javaMember.getModifiers())) {
+            this.bean = null;
+        } else {
+            this.bean = bean;
+        }
     }
 
     @Override
-    public Object create(Bean<Object> bean, CreationalContext<Object> creationalContext) {
-        return new ObjectConverterImpl<Object, Object>(delegate);
+    public Object create(final Bean<Object> beanIn, final CreationalContext<Object> creationalContext) {
+        return new ObjectConverterImpl<Object, Object>(bean, delegate);
     }
 
     @Override
